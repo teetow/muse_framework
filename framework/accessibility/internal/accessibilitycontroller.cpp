@@ -372,8 +372,19 @@ void AccessibilityController::propertyChanged(IAccessible* item, IAccessible::Pr
     switch (property) {
     case IAccessible::Property::Undefined:
         return;
-    case IAccessible::Property::Parent: etype = QAccessible::ParentChanged;
-        break;
+    case IAccessible::Property::Parent: {
+        //! NOTE Items register under the root when they have no parent yet. Keep
+        //! the root's child list in step when they are reparented: a stale entry
+        //! is a child whose parent() is somewhere else, which breaks sibling
+        //! navigation and hides every later root child from screen readers.
+        const bool underRoot = item->accessibleParent() == this;
+        if (underRoot && !m_children.contains(item)) {
+            m_children.append(item);
+        } else if (!underRoot) {
+            m_children.removeOne(item);
+        }
+        etype = QAccessible::ParentChanged;
+    } break;
     case IAccessible::Property::Name:
     case IAccessible::Property::Description: {
         if (item == m_lastFocused) {
