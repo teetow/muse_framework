@@ -50,7 +50,9 @@ static QString appInstallRoot()
 
 void GlobalConfiguration::init()
 {
-    settings()->setDefaultValue(DEV_MODE_ENABLED_KEY, Val(application()->unstable()));
+    //! NOTE Screen captures must look like the release: no dev-only UI under MUSE_SCREENCAP.
+    const bool screencap = qEnvironmentVariableIsSet("MUSE_SCREENCAP");
+    settings()->setDefaultValue(DEV_MODE_ENABLED_KEY, Val(application()->unstable() && !screencap));
     settings()->setDefaultValue(HIGH_RESOLUTION_TIMERS, Val(false));
 }
 

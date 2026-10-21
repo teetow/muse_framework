@@ -41,7 +41,10 @@ void UpdateConfiguration::init()
 {
     m_config = ConfigReader::read(":/configs/update.cfg");
 
-    settings()->setDefaultValue(CHECK_FOR_UPDATE_KEY, Val(isAppUpdatable()));
+    //! NOTE Capture runs start from factory settings every time; under MUSE_SCREENCAP
+    //! they must not send an update-check request each run.
+    const bool screencap = qEnvironmentVariableIsSet("MUSE_SCREENCAP");
+    settings()->setDefaultValue(CHECK_FOR_UPDATE_KEY, Val(isAppUpdatable() && !screencap));
     settings()->valueChanged(CHECK_FOR_UPDATE_KEY).onReceive(this, [this](const Val&) {
         m_needCheckForUpdateChanged.notify();
     });
