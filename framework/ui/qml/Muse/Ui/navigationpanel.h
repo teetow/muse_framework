@@ -103,6 +103,7 @@ signals:
 
 private slots:
     void onSectionDestroyed();
+    void updateAccessibleEnabled();
 
 private:
     NavigationSection* m_section = nullptr;

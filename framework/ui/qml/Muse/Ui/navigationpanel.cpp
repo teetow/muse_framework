@@ -30,6 +30,9 @@ using namespace muse;
 using namespace muse::ui;
 using namespace muse::accessibility;
 
+//! NOTE enabledChanged is both a Qt signal and an async::Channel getter; pick the signal.
+static constexpr auto enabledChangedSignal = static_cast<void (AbstractNavigation::*)(bool)>(&AbstractNavigation::enabledChanged);
+
 NavigationPanel::NavigationPanel(QObject* parent)
     : AbstractNavigation(parent)
 {
@@ -52,6 +55,21 @@ void NavigationPanel::componentComplete()
     accessible()->setRole(MUAccessible::Panel);
 
     AbstractNavigation::componentComplete();
+
+    //! NOTE The base class reports the panel's own `enabled` flag; a panel is
+    //! only effectively enabled when it also has an enabled control.
+    connect(this, enabledChangedSignal, this, &NavigationPanel::updateAccessibleEnabled);
+}
+
+void NavigationPanel::updateAccessibleEnabled()
+{
+    //! NOTE enabled() depends on the controls, so the accessible state has to be
+    //! refreshed when they come, go or change. Otherwise a panel whose controls
+    //! register after it stays "disabled", which accessibility reports as
+    //! invisible, hiding the panel and all its controls from screen readers.
+    if (isComponentCompleted()) {
+        accessible()->setState(IAccessible::State::Enabled, enabled());
+    }
 }
 
 QString NavigationPanel::name() const
@@ -218,6 +236,8 @@ void NavigationPanel::addControl(NavigationControl* control)
     }
 
     m_controls.insert(control);
+    connect(control, enabledChangedSignal, this, &NavigationPanel::updateAccessibleEnabled);
+    updateAccessibleEnabled();
 
     if (m_controlsListChanged.isConnected()) {
         m_controlsListChanged.notify();
@@ -232,6 +252,8 @@ void NavigationPanel::removeControl(NavigationControl* control)
     }
 
     m_controls.erase(control);
+    disconnect(control, enabledChangedSignal, this, &NavigationPanel::updateAccessibleEnabled);
+    updateAccessibleEnabled();
 
     if (m_controlsListChanged.isConnected()) {
         m_controlsListChanged.notify();
