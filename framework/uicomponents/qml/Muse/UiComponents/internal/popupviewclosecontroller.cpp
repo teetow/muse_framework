@@ -25,6 +25,15 @@
 #include <QGuiApplication>
 #include <QQuickWindow>
 
+//! NOTE Screen capture rigs drive the app in the background, where it never has
+//! focus: with MUSE_SCREENCAP set, popups stay open when the app or the popup
+//! loses focus. A press outside the popup still closes it.
+static bool keepOpenWithoutFocus()
+{
+    static const bool keep = qEnvironmentVariableIsSet("MUSE_SCREENCAP");
+    return keep;
+}
+
 using namespace muse::uicomponents;
 
 PopupViewCloseController::PopupViewCloseController(const modularity::ContextPtr& iocCtx, QObject* parent)
@@ -109,6 +118,9 @@ bool PopupViewCloseController::eventFilter(QObject* watched, QEvent* event)
     } else if (QEvent::MouseButtonPress == event->type()) {
         doFocusOut(static_cast<QMouseEvent*>(event)->globalPosition());
     } else if (QEvent::FocusOut == event->type() && watched == popupWindow()) {
+        if (keepOpenWithoutFocus()) {
+            return QObject::eventFilter(watched, event);
+        }
         doFocusOut(QCursor::pos());
     } else if (QEvent::Close == event->type() && watched == popupWindow()) {
         if (!m_canClose) {
@@ -121,7 +133,7 @@ bool PopupViewCloseController::eventFilter(QObject* watched, QEvent* event)
 
 void PopupViewCloseController::onApplicationStateChanged(Qt::ApplicationState state)
 {
-    if (!m_active || !m_isCloseOnPressOutsideParent) {
+    if (!m_active || !m_isCloseOnPressOutsideParent || keepOpenWithoutFocus()) {
         return;
     }
 
