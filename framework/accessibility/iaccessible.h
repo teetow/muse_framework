@@ -160,6 +160,10 @@ public:
     // ListView item Interface
     virtual int accessibleRowIndex() const = 0;
 
+    // Action Interface
+    //! Activates the item the way Enter/Space would. Returns false if the item can't be activated.
+    virtual bool accessibleTrigger() { return false; }
+
     virtual async::Channel<IAccessible::Property, Val> accessiblePropertyChanged() const = 0;
 
     virtual void setState(State state, bool arg) = 0;

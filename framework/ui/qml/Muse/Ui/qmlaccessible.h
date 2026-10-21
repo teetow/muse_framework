@@ -152,6 +152,9 @@ public:
     // ListView item Interface
     int accessibleRowIndex() const override;
 
+    // Action Interface
+    bool accessibleTrigger() override;
+
     async::Channel<Property, Val> accessiblePropertyChanged() const override;
 
     void setState(State st, bool arg) override;
