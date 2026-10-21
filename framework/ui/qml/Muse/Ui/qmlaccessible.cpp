@@ -527,8 +527,10 @@ void AccessibleItem::setAccessibleParent(AccessibleItem* p)
 
     if (m_accessibleParent) {
         m_accessibleParent->addChild(this);
-        m_accessiblePropertyChanged.send(IAccessible::Property::Parent, Val());
     }
+
+    //! NOTE Also when cleared: the item then falls back to the root, which has to hear about it.
+    m_accessiblePropertyChanged.send(IAccessible::Property::Parent, Val());
 
     emit accessiblePrnChanged();
 }
