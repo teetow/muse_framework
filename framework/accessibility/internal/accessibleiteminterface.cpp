@@ -548,8 +548,50 @@ void* AccessibleItemInterface::interface_cast(QAccessible::InterfaceType type)
         return static_cast<QAccessibleTableCellInterface*>(this);
     }
 
+    //! NOTE Lets assistive technology press buttons (UI Automation's Invoke on Windows)
+    if (type == QAccessible::InterfaceType::ActionInterface && isPressable()) {
+        return static_cast<QAccessibleActionInterface*>(this);
+    }
+
     //! NOTE Not implemented
     return nullptr;
+}
+
+bool AccessibleItemInterface::isPressable() const
+{
+    switch (role()) {
+    case QAccessible::Button:
+    case QAccessible::ButtonMenu:
+    case QAccessible::ButtonDropDown:
+    case QAccessible::CheckBox:
+    case QAccessible::RadioButton:
+    case QAccessible::MenuItem:
+    case QAccessible::PageTab:
+    case QAccessible::ComboBox:
+        return true;
+    default:
+        return false;
+    }
+}
+
+QStringList AccessibleItemInterface::actionNames() const
+{
+    if (!isPressable() || state().disabled) {
+        return {};
+    }
+    return { QAccessibleActionInterface::pressAction() };
+}
+
+void AccessibleItemInterface::doAction(const QString& actionName)
+{
+    if (actionName == QAccessibleActionInterface::pressAction() && isPressable()) {
+        m_object->item()->accessibleTrigger();
+    }
+}
+
+QStringList AccessibleItemInterface::keyBindingsForAction(const QString&) const
+{
+    return {};
 }
 
 IAccessible::TextBoundaryType AccessibleItemInterface::muBoundaryType(QAccessible::TextBoundaryType qtBoundaryType) const

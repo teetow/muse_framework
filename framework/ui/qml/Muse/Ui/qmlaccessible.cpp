@@ -22,8 +22,11 @@
 
 #include "qmlaccessible.h"
 
+#include <QPointer>
 #include <QQuickWindow>
 #include <QTextBoundaryFinder>
+
+#include "navigationcontrol.h"
 
 #include "log.h"
 
@@ -378,6 +381,26 @@ async::Channel<IAccessible::State, bool> AccessibleItem::accessibleStateChanged(
 int AccessibleItem::accessibleRowIndex() const
 {
     return m_row;
+}
+
+bool AccessibleItem::accessibleTrigger()
+{
+    //! NOTE The navigation control that owns this item is what Enter/Space trigger,
+    //! so an assistive-technology "press" takes the same path as the keyboard.
+    QPointer<NavigationControl> control = qobject_cast<NavigationControl*>(parent());
+    if (!control || !accessibleState(State::Enabled)) {
+        return false;
+    }
+
+    //! NOTE Queued: a press that opens a modal dialog must not block the
+    //! accessibility client's call until the dialog closes.
+    QMetaObject::invokeMethod(control, [control]() {
+        if (control) {
+            control->trigger();
+        }
+    }, Qt::QueuedConnection);
+
+    return true;
 }
 
 void AccessibleItem::classBegin()
