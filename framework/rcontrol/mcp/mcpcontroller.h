@@ -27,6 +27,7 @@
 #include "global/iapplication.h"
 #include "rcommand/icommanddispatcher.h"
 #include "rcommand/icommandsregister.h"
+#include "rcommand/icommandsstate.h"
 
 #include "mcptypes.h"
 
@@ -37,6 +38,7 @@ class McpController : public Contextable, public async::Asyncable
     GlobalInject<IApplication> application;
     GlobalInject<rcommand::ICommandsRegister> commandsRegister;
     ContextInject<rcommand::ICommandDispatcher> commandsDispatcher = { this };
+    ContextInject<rcommand::ICommandsState> commandsState = { this };
 
 public:
     McpController(const modularity::ContextPtr& iocCtx);
