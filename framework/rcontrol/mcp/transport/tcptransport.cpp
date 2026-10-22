@@ -26,7 +26,15 @@
 
 #include "log.h"
 
-static const int DEFAULT_PORT = 2212;
+static const quint16 DEFAULT_PORT = 2212;
+
+//! NOTE MUSE_RCONTROL_PORT overrides the port, e.g. to run several instances
+static quint16 port()
+{
+    bool ok = false;
+    const int envPort = qEnvironmentVariableIntValue("MUSE_RCONTROL_PORT", &ok);
+    return ok && envPort > 0 && envPort <= 65535 ? static_cast<quint16>(envPort) : DEFAULT_PORT;
+}
 
 using namespace muse::rcontrol::mcp;
 
@@ -80,21 +88,32 @@ bool TcpTransport::start()
     if (!m_server) {
         m_server = new QTcpServer();
         QObject::connect(m_server, &QTcpServer::newConnection, [this]() {
+            QTcpSocket* socket = m_server->nextPendingConnection();
             if (m_connection) {
-                LOGE() << "Already connected";
+                LOGE() << "Already connected, refusing another client";
+                socket->disconnectFromHost();
+                socket->deleteLater();
                 return;
             }
 
-            QTcpSocket* socket = m_server->nextPendingConnection();
             m_connection = new TcpConnection(socket, m_onRequest);
+
+            //! NOTE Free the slot as soon as the client leaves, not when the
+            //! connection object is eventually deleted, so a client that
+            //! reconnects right away isn't refused.
+            QObject::connect(socket, &QTcpSocket::disconnected, m_server, [this]() {
+                m_connection.clear();
+            });
         });
     }
 
-    if (!m_server->listen(QHostAddress::Any, DEFAULT_PORT)) {
+    //! NOTE Local clients only: this channel controls the app
+    if (!m_server->listen(QHostAddress::LocalHost, port())) {
+        LOGE() << "TcpTransport failed to listen on port " << port() << ": " << m_server->errorString();
         return false;
     }
 
-    LOGI() << "TcpTransport started on port " << DEFAULT_PORT;
+    LOGI() << "TcpTransport started on localhost port " << m_server->serverPort();
 
     return true;
 }
@@ -102,8 +121,7 @@ bool TcpTransport::start()
 void TcpTransport::stop()
 {
     if (m_server) {
-        delete m_connection;
-        m_connection = nullptr;
+        delete m_connection.data();
 
         m_server->close();
         delete m_server;
