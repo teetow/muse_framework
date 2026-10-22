@@ -20,6 +20,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "globalconfiguration.h"
+#include "profiledir.h"
 
 #include <QString>
 #include <QStandardPaths>
@@ -133,6 +134,10 @@ io::path_t GlobalConfiguration::fromBundledPath(const io::path_t& path) const
 
 io::path_t GlobalConfiguration::appConfigPath() const
 {
+    const QString profileConfig = profileSubdir("local");
+    if (!profileConfig.isEmpty()) {
+        return profileConfig;
+    }
     return QStandardPaths::writableLocation(QStandardPaths::ConfigLocation);
 }
 
@@ -151,7 +156,8 @@ QString GlobalConfiguration::resolveUserAppDataPath() const
 #elif defined(Q_OS_WASM)
     return QString("/files/data");
 #else
-    return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+    const QString profileData = profileSubdir("local");
+    return profileData.isEmpty() ? QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) : profileData;
 #endif
 }
 
@@ -162,7 +168,9 @@ io::path_t GlobalConfiguration::userBackupPath() const
 
 io::path_t GlobalConfiguration::userDataPath() const
 {
-    static io::path_t p = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/" + QCoreApplication::applicationName();
+    static io::path_t p = profileSubdir("documents").isEmpty()
+                          ? QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/" + QCoreApplication::applicationName()
+                          : profileSubdir("documents");
     return p;
 }
 
