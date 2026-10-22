@@ -20,6 +20,7 @@
 #pragma once
 
 #include <QObject>
+#include <QPointer>
 #include <QByteArray>
 
 #include "../itransport.h"
@@ -58,7 +59,8 @@ public:
 
 private:
     QTcpServer* m_server = nullptr;
-    TcpConnection* m_connection = nullptr;
+    //! NOTE The connection deletes itself when the client disconnects
+    QPointer<TcpConnection> m_connection;
     RequestHandler m_onRequest = nullptr;
 };
 }
