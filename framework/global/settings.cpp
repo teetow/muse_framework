@@ -21,6 +21,7 @@
  */
 
 #include "settings.h"
+#include "internal/profiledir.h"
 
 #include <QDateTime>
 #include <QSettings>
@@ -56,6 +57,13 @@ Settings::Settings()
 #ifndef Q_OS_MAC
     QSettings::setDefaultFormat(QSettings::IniFormat);
 #endif
+
+    const QString profileSettings = profileSubdir("roaming");
+    if (!profileSettings.isEmpty()) {
+        QSettings::setDefaultFormat(QSettings::IniFormat);
+        QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, profileSettings);
+        QSettings::setPath(QSettings::IniFormat, QSettings::SystemScope, profileSettings);
+    }
 
     m_settings = new QSettings();
 }
@@ -244,7 +252,8 @@ QString Settings::dataPath() const
 #ifdef WIN_PORTABLE
     return QDir::cleanPath(QString("%1/../../../Data/settings").arg(QCoreApplication::applicationDirPath()));
 #else
-    return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+    const QString profileData = profileSubdir("local");
+    return profileData.isEmpty() ? QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) : profileData;
 #endif
 }
 

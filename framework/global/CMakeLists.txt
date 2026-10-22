@@ -181,6 +181,7 @@ else()
         globalmodule.h
         settings.cpp
         settings.h
+        internal/profiledir.h
 
         api/apitypes.h
         api/iapiregister.h
