@@ -71,5 +71,7 @@ struct Tool {
 
 struct ToolResult {
     bool isError = false;
+    std::string text;            // human-readable result, or the error message
+    JsonValue structuredContent; // optional structured result (an object)
 };
 }

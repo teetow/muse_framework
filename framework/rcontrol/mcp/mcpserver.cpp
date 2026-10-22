@@ -137,17 +137,24 @@ void McpServer::onToolsList(const JsonObject& request, const std::function<void(
             obj["title"] = tool.title;
             obj["description"] = tool.description;
 
+            //! NOTE A JSON Schema object: arguments go under "properties"
             const InputSchema& schema = tool.inputSchema;
             JsonObject schemaObj;
             schemaObj["type"] = schema.type;
+            JsonObject propertiesObj;
             for (const auto& property : schema.properties) {
                 JsonObject propertyObj;
                 propertyObj["type"] = to_string(property.second.type);
                 propertyObj["description"] = property.second.description;
-                propertyObj["minimum"] = property.second.minimum.toString();
-                propertyObj["maximum"] = property.second.maximum.toString();
-                schemaObj[property.first] = propertyObj;
+                if (!property.second.minimum.isNull()) {
+                    propertyObj["minimum"] = property.second.minimum;
+                }
+                if (!property.second.maximum.isNull()) {
+                    propertyObj["maximum"] = property.second.maximum;
+                }
+                propertiesObj[property.first] = propertyObj;
             }
+            schemaObj["properties"] = propertiesObj;
             obj["inputSchema"] = schemaObj;
 
             arr << obj;
@@ -184,8 +191,19 @@ void McpServer::onToolsCall(const JsonObject& request, const std::function<void(
         response["jsonrpc"] = "2.0";
         response["id"] = id;
 
+        JsonArray content;
+        if (!toolResult.text.empty()) {
+            JsonObject textItem;
+            textItem["type"] = "text";
+            textItem["text"] = toolResult.text;
+            content << textItem;
+        }
+
         JsonObject resObj;
-        resObj["content"] = JsonArray();
+        resObj["content"] = content;
+        if (toolResult.structuredContent.isObject()) {
+            resObj["structuredContent"] = toolResult.structuredContent;
+        }
         resObj["isError"] = toolResult.isError;
 
         response["result"] = resObj;
