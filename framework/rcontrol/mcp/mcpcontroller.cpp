@@ -195,6 +195,16 @@ void McpController::init()
             return;
         }
 
+        //! NOTE Same rule as the UI: a command that is disabled right now (no project,
+        //! wrong selection, ...) is refused, not run
+        if (!commandsState()->commandState(info->command).enabled) {
+            ToolResult unavailable;
+            unavailable.isError = true;
+            unavailable.text = "not available now: " + name;
+            onResult(unavailable);
+            return;
+        }
+
         Params params;
         Ret ret = toParams(*info, args, params);
         if (!ret) {
