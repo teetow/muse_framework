@@ -29,11 +29,13 @@
 #include "rcommand/icommandsregister.h"
 #include "rcommand/icommandsstate.h"
 
+#include "../iremotecontrol.h"
+
 #include "mcptypes.h"
 
 namespace muse::rcontrol::mcp {
 class McpServer;
-class McpController : public Contextable, public async::Asyncable
+class McpController : public IRemoteControl, public Contextable, public async::Asyncable
 {
     GlobalInject<IApplication> application;
     GlobalInject<rcommand::ICommandsRegister> commandsRegister;
@@ -44,8 +46,8 @@ public:
     McpController(const modularity::ContextPtr& iocCtx);
     ~McpController();
 
-    void init();
-    void deinit();
+    bool start() override;
+    void stop() override;
 
 private:
 

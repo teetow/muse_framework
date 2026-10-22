@@ -46,10 +46,10 @@ McpServer::~McpServer()
     m_transport = nullptr;
 }
 
-void McpServer::init()
+bool McpServer::init()
 {
     IF_ASSERT_FAILED(m_transport) {
-        return;
+        return false;
     }
 
     m_transport->onRequest([this](const ByteArray& request, const ITransport::ResponseHandler& onResponse) {
@@ -60,7 +60,7 @@ void McpServer::init()
         });
     });
 
-    m_transport->start();
+    return m_transport->start();
 }
 
 void McpServer::deinit()

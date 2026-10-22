@@ -30,22 +30,30 @@ namespace muse::rcontrol {
 class RControlModule : public modularity::IModuleSetup
 {
 public:
+    //! autoStart: start the server on init; otherwise the app starts it through IRemoteControl when it is ready
+    explicit RControlModule(bool autoStart = true)
+        : m_autoStart(autoStart) {}
+
     std::string moduleName() const override;
 
     modularity::IContextSetup* newContext(const muse::modularity::ContextPtr& ctx) const override;
+
+private:
+    bool m_autoStart = true;
 };
 
 class RControlContext : public modularity::IContextSetup
 {
 public:
-    RControlContext(const muse::modularity::ContextPtr& ctx)
-        : modularity::IContextSetup(ctx) {}
+    RControlContext(const muse::modularity::ContextPtr& ctx, bool autoStart)
+        : modularity::IContextSetup(ctx), m_autoStart(autoStart) {}
 
     void registerExports() override;
     void onInit(const IApplication::RunMode& mode) override;
     void onDeinit() override;
 
 private:
+    bool m_autoStart = true;
     std::shared_ptr<mcp::McpController> m_mcpController;
 };
 }

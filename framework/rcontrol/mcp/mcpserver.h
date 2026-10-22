@@ -35,7 +35,7 @@ public:
     McpServer(const std::string& version, ITransport* transport = nullptr);
     ~McpServer();
 
-    void init();
+    bool init();
     void deinit();
 
     using ToolsListResultHandler = std::function<void (std::vector<Tool>)>;
