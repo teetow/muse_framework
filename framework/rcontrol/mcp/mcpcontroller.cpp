@@ -39,7 +39,7 @@ McpController::McpController(const modularity::ContextPtr& iocCtx)
 
 McpController::~McpController()
 {
-    deinit();
+    stop();
 }
 
 //! NOTE MCP tool names: letters, digits, '_' and '-', at most 64 characters.
@@ -171,8 +171,12 @@ static ToolResult toToolResult(const Response& response)
     return result;
 }
 
-void McpController::init()
+bool McpController::start()
 {
+    if (m_mcpServer) {
+        return true;
+    }
+
     m_mcpServer = std::make_unique<McpServer>(application()->version().toStdString());
 
     m_mcpServer->onToolsListRequest([this](const McpServer::ToolsListResultHandler& onResult) {
@@ -218,10 +222,14 @@ void McpController::init()
         });
     });
 
-    m_mcpServer->init();
+    if (!m_mcpServer->init()) {
+        m_mcpServer = nullptr;
+        return false;
+    }
+    return true;
 }
 
-void McpController::deinit()
+void McpController::stop()
 {
     if (m_mcpServer) {
         m_mcpServer->deinit();

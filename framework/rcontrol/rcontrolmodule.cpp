@@ -19,6 +19,7 @@
 
 #include "rcontrolmodule.h"
 
+#include "iremotecontrol.h"
 #include "mcp/mcpcontroller.h"
 
 using namespace muse;
@@ -33,12 +34,13 @@ std::string RControlModule::moduleName() const
 
 modularity::IContextSetup* RControlModule::newContext(const muse::modularity::ContextPtr& ctx) const
 {
-    return new RControlContext(ctx);
+    return new RControlContext(ctx, m_autoStart);
 }
 
 void RControlContext::registerExports()
 {
     m_mcpController = std::make_shared<mcp::McpController>(iocContext());
+    ioc()->registerExport<IRemoteControl>(mname, m_mcpController);
 }
 
 void RControlContext::onInit(const IApplication::RunMode& mode)
@@ -47,10 +49,12 @@ void RControlContext::onInit(const IApplication::RunMode& mode)
         return;
     }
 
-    m_mcpController->init();
+    if (m_autoStart) {
+        m_mcpController->start();
+    }
 }
 
 void RControlContext::onDeinit()
 {
-    m_mcpController->deinit();
+    m_mcpController->stop();
 }

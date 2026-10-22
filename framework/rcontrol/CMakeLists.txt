@@ -23,6 +23,7 @@ target_link_libraries(muse_rcontrol PRIVATE Qt::Network)
 target_sources(muse_rcontrol PRIVATE
     rcontrolmodule.cpp
     rcontrolmodule.h
+    iremotecontrol.h
 
     mcp/mcpcontroller.cpp
     mcp/mcpcontroller.h
