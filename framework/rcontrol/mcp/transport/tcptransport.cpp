@@ -64,12 +64,17 @@ void TcpConnection::processMessage(const QByteArray& request)
 
     if (m_onRequest) {
         ByteArray req = ByteArray::fromQByteArrayNoCopy(request);
-        m_onRequest(req, [this](const ByteArray& response) {
+        //! NOTE A command can answer later; the client may have left by then
+        m_onRequest(req, [self = QPointer<TcpConnection>(this)](const ByteArray& response) {
+            if (!self) {
+                LOGW() << "client disconnected before the answer was ready";
+                return;
+            }
             QByteArray resp = response.toQByteArrayNoCopy();
             LOGD() << "response: " << resp;
-            m_socket->write(resp);
-            m_socket->write("\n");
-            m_socket->flush();
+            self->m_socket->write(resp);
+            self->m_socket->write("\n");
+            self->m_socket->flush();
         });
     } else {
         LOGE() << "No onResponse handler";
