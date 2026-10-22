@@ -20,7 +20,9 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 
+#include "async/asyncable.h"
 #include "modularity/ioc.h"
 #include "global/iapplication.h"
 #include "rcommand/icommanddispatcher.h"
@@ -30,7 +32,7 @@
 
 namespace muse::rcontrol::mcp {
 class McpServer;
-class McpController : public Contextable
+class McpController : public Contextable, public async::Asyncable
 {
     GlobalInject<IApplication> application;
     GlobalInject<rcommand::ICommandsRegister> commandsRegister;
@@ -46,6 +48,7 @@ public:
 private:
 
     std::vector<Tool> makeToolsList() const;
+    std::optional<rcommand::CommandInfo> findCommandInfo(const std::string& toolName) const;
 
     std::unique_ptr<McpServer> m_mcpServer;
 };
