@@ -26,15 +26,7 @@
 
 #include "log.h"
 
-static const quint16 DEFAULT_PORT = 2212;
-
-//! NOTE MUSE_RCONTROL_PORT overrides the port, e.g. to run several instances
-static quint16 port()
-{
-    bool ok = false;
-    const int envPort = qEnvironmentVariableIntValue("MUSE_RCONTROL_PORT", &ok);
-    return ok && envPort > 0 && envPort <= 65535 ? static_cast<quint16>(envPort) : DEFAULT_PORT;
-}
+#include "listenport.h"
 
 using namespace muse::rcontrol::mcp;
 
@@ -113,8 +105,8 @@ bool TcpTransport::start()
     }
 
     //! NOTE Local clients only: this channel controls the app
-    if (!m_server->listen(QHostAddress::LocalHost, port())) {
-        LOGE() << "TcpTransport failed to listen on port " << port() << ": " << m_server->errorString();
+    if (!m_server->listen(QHostAddress::LocalHost, listenPort())) {
+        LOGE() << "TcpTransport failed to listen on port " << listenPort() << ": " << m_server->errorString();
         return false;
     }
 

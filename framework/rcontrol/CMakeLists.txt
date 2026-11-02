@@ -34,6 +34,7 @@ target_sources(muse_rcontrol PRIVATE
     mcp/transport/tcptransport.h
     mcp/transport/httptransport.cpp
     mcp/transport/httptransport.h
+    mcp/transport/listenport.h
 )
 
 add_executable(musescore-mcpbridge

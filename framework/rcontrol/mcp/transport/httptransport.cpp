@@ -26,7 +26,8 @@
 
 #include "log.h"
 
-static const int HTTP_DEFAULT_PORT = 2212;
+#include "listenport.h"
+
 static const int HTTP_MAX_HEADER_BYTES = 16 * 1024;
 static const int HTTP_MAX_BODY_BYTES = 1024 * 1024;
 static const char* HTTP_PROTOCOL_VERSION = "2025-11-25";
@@ -389,12 +390,12 @@ bool HttpTransport::start()
         return true;
     }
 
-    if (!m_server->listen(QHostAddress::LocalHost, HTTP_DEFAULT_PORT)) {
+    if (!m_server->listen(QHostAddress::LocalHost, listenPort())) {
         LOGE() << "HttpTransport failed to listen: " << m_server->errorString();
         return false;
     }
 
-    LOGI() << "HttpTransport started on http://127.0.0.1:" << HTTP_DEFAULT_PORT << "/mcp";
+    LOGI() << "HttpTransport started on http://127.0.0.1:" << m_server->serverPort() << "/mcp";
     return true;
 }
 
