@@ -120,6 +120,37 @@ static muse::JsonValue toJson(const muse::Val& val)
     return muse::JsonValue();
 }
 
+//! NOTE The elements of list and object arguments keep their JSON types
+static muse::Val toVal(const muse::JsonValue& v)
+{
+    if (v.isBool()) {
+        return muse::Val(v.toBool());
+    }
+    if (v.isNumber()) {
+        return muse::Val(v.toDouble());
+    }
+    if (v.isString()) {
+        return muse::Val(v.toStdString());
+    }
+    if (v.isArray()) {
+        const muse::JsonArray array = v.toArray();
+        muse::ValList list;
+        for (size_t i = 0; i < array.size(); ++i) {
+            list.push_back(toVal(array.at(i)));
+        }
+        return muse::Val(list);
+    }
+    if (v.isObject()) {
+        const muse::JsonObject object = v.toObject();
+        muse::ValMap map;
+        for (const std::string& key : object.keys()) {
+            map[key] = toVal(object.value(key));
+        }
+        return muse::Val(map);
+    }
+    return muse::Val();
+}
+
 //! NOTE Arguments arrive as JSON; the command declares the type it expects for each.
 static Ret toParams(const CommandInfo& info, const muse::JsonObject& args, Params& params)
 {
@@ -142,6 +173,18 @@ static Ret toParams(const CommandInfo& info, const muse::JsonObject& args, Param
             break;
         case rcommand::DataType::Boolean:
             params[key] = muse::Val(v.toBool());
+            break;
+        case rcommand::DataType::Array:
+            if (!v.isArray()) {
+                return make_ret(Ret::Code::BadArgs, "argument must be a list: " + key);
+            }
+            params[key] = toVal(v);
+            break;
+        case rcommand::DataType::Object:
+            if (!v.isObject()) {
+                return make_ret(Ret::Code::BadArgs, "argument must be an object: " + key);
+            }
+            params[key] = toVal(v);
             break;
         default:
             return make_ret(Ret::Code::BadArgs, "argument of unsupported type: " + key);
